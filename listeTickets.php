@@ -112,6 +112,10 @@ if (file_exists($file)) {
                 <?= htmlspecialchars($t['priority'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
             <p><strong>Statut :</strong>
                 <?= htmlspecialchars($t['status'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
+            <button onclick="window.location.href='afficheTicket.php?id=<?= urlencode($t['id']) ?>';">
+                Voir le ticket
+            </button>
+
             <p><small>Créé le
                     <?= htmlspecialchars($t['created_at'], ENT_QUOTES | ENT_SUBSTITUTE); ?></small></p>
         </div>
