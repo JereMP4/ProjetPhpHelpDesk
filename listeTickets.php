@@ -145,36 +145,32 @@ $filtreStatut    = $_GET['statut']    ?? '';
         $found = true;
         ?>
         <div class="ticket">
-            <?php if ($isTuteur): ?>
-                <p>
-                    <strong>Étudiant :</strong>
-                    <?= htmlspecialchars($t['author'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
-                </p>
-            <?php endif; ?>
-
-            <p>
+            <h3>
                 <strong>Titre :</strong>
                 <?= htmlspecialchars($t['title'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
-            </p>
+            </h3>
 
-            <p>
-                <strong>Description :</strong>
-                <?= nl2br(htmlspecialchars($t['description'], ENT_QUOTES | ENT_SUBSTITUTE)); ?>
-            </p>
 
-            <p><strong>Catégorie :</strong>
-                <?= htmlspecialchars($t['category'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
-            <p><strong>Priorité :</strong>
-                <?= htmlspecialchars($t['priority'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
-            <p><strong>Statut :</strong>
-                <?= htmlspecialchars($t['status'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
+
+<!--            <p>-->
+<!--                <strong>Description :</strong>-->
+<!--                --><?php //= nl2br(htmlspecialchars($t['description'], ENT_QUOTES | ENT_SUBSTITUTE)); ?>
+<!--            </p>-->
+
+            <p style="font-size: 75%;">
+                <em><?= htmlspecialchars($t['category'], ENT_QUOTES | ENT_SUBSTITUTE); ?></em> |
+                <em><?= htmlspecialchars($t['priority'], ENT_QUOTES | ENT_SUBSTITUTE); ?></em> |
+                <em><?= htmlspecialchars($t['status'], ENT_QUOTES | ENT_SUBSTITUTE); ?></em> |
+                <em>Créé le
+                    <?= htmlspecialchars($t['created_at'], ENT_QUOTES | ENT_SUBSTITUTE); ?></em>
+                <?php if ($isTuteur): ?>
+                    par <em><?= htmlspecialchars($t['author'], ENT_QUOTES | ENT_SUBSTITUTE); ?></em>
+        <?php endif; ?>
+            </p>
 
             <button onclick="window.location.href='afficheTicket.php?id=<?= urlencode($t['id']) ?>';">
                 Voir le ticket
             </button>
-
-            <p><small>Créé le
-                    <?= htmlspecialchars($t['created_at'], ENT_QUOTES | ENT_SUBSTITUTE); ?></small></p>
         </div>
         <?php
     }
