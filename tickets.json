@@ -6,8 +6,15 @@
         "description": "bonjour j'ai un probleme",
         "category": "TD",
         "priority": "Haute",
-        "status": "Ouvert",
-        "created_at": "2026-02-18 21:07:18"
+        "status": "résolu",
+        "created_at": "2026-02-18 21:07:18",
+        "comments": [
+            {
+                "auteur": "tuteur",
+                "date": "2026-02-19 22:36:54",
+                "message": "Ouiiii, c'est michelllleuh tu donnes plus de nouvelles, on peut plus te faire confiance !"
+            }
+        ]
     },
     {
         "id": "ticket_0abe93cffd17de77",
