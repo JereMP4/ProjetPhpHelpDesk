@@ -1,0 +1,22 @@
+[
+    {
+        "id": "ticket_e5b2d29fc9325fc3",
+        "author": "student",
+        "title": "Bonjour",
+        "description": "bonjour j'ai un probleme",
+        "category": "TD",
+        "priority": "Haute",
+        "status": "Ouvert",
+        "created_at": "2026-02-18 21:07:18"
+    },
+    {
+        "id": "ticket_0abe93cffd17de77",
+        "author": "student2",
+        "title": "zertze z",
+        "description": "dg gh wdg dfgdfgdfg",
+        "category": "TP",
+        "priority": "Moyenne",
+        "status": "Ouvert",
+        "created_at": "2026-02-18 21:36:37"
+    }
+]
