@@ -14,10 +14,17 @@ if (empty($_SESSION['username'])) {
     <head>
         <meta charset="utf-8">
         <title>Créer un ticket</title>
+        <link rel="stylesheet" href="style/ticket.css">
     </head>
     <body>
-    <p>Accès réservé aux étudiants. Veuillez vous connecter avec un compte étudiant.</p>
-    <button onclick="window.location.href='login.php';">Se connecter</button>
+    <div class="page-wrapper">
+        <p class="user-info">
+            Accès réservé aux étudiants. Veuillez vous connecter avec un compte étudiant.
+        </p>
+        <button class="btn btn-primary" onclick="window.location.href='login.php';">
+            Se connecter
+        </button>
+    </div>
     </body>
     </html>
     <?php
@@ -34,10 +41,17 @@ if ($isTuteur) {
     <head>
         <meta charset="utf-8">
         <title>Créer un ticket</title>
+        <link rel="stylesheet" href="style/ticket.css">
     </head>
     <body>
-    <p>Les tuteurs ne peuvent pas créer de tickets étudiants.</p>
-    <button onclick="window.location.href='listeTickets.php';">Retour à la liste des tickets</button>
+    <div class="page-wrapper">
+        <p class="user-info">
+            Les tuteurs ne peuvent pas créer de tickets étudiants.
+        </p>
+        <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php';">
+            Retour à la liste des tickets
+        </button>
+    </div>
     </body>
     </html>
     <?php
@@ -86,14 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $created_at = (new DateTime())->format('Y-m-d H:i:s');
 
         $ticket = [
-                'id'         => $id,
-                'author'     => $author,
-                'title'      => $title,
-                'description'=> $description,
-                'category'   => $category,
-                'priority'   => $priority,
-                'status'     => $status,
-                'created_at' => $created_at,
+                'id'          => $id,
+                'author'      => $author,
+                'title'       => $title,
+                'description' => $description,
+                'category'    => $category,
+                'priority'    => $priority,
+                'status'      => $status,
+                'created_at'  => $created_at,
         ];
 
         // emplacement de stockage (fichier JSON)
@@ -137,95 +151,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <title>Créer un ticket</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width:800px; margin:2rem auto; padding:0 1rem; }
-        form { display:flex; flex-direction:column; gap:.6rem; }
-        label { font-weight:600; }
-        textarea { min-height:120px; }
-        .errors { color:#900; }
-        .success { color:#060; }
-        .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-    </style>
+    <link rel="stylesheet" href="style/ticket.css">
 </head>
 <body>
-<div class="top-bar">
-    <h1>Créer un ticket</h1>
-    <button type="button"
-            onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>';">
-        Se déconnecter
-    </button>
+<div class="page-wrapper">
+    <div class="top-bar">
+        <h1>Créer un ticket</h1>
+        <button type="button" class="btn btn-outline"
+                onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>';">
+            Se déconnecter
+        </button>
+    </div>
+
+    <p class="user-info">
+        Connecté en tant que :
+        <strong><?php echo htmlspecialchars($username, ENT_QUOTES | ENT_SUBSTITUTE); ?></strong>
+    </p>
+
+    <p class="back-link">
+        <button type="button" class="btn btn-secondary"
+                onclick="window.location.href='listeTickets.php';">
+            Retour à mes tickets
+        </button>
+    </p>
+
+    <?php if ($errors): ?>
+        <div class="alert alert-error">
+            <ul>
+                <?php foreach ($errors as $e): ?>
+                    <li><?php echo htmlspecialchars($e, ENT_QUOTES | ENT_SUBSTITUTE); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($success): ?>
+        <div class="alert alert-success">
+            <?php echo htmlspecialchars($success, ENT_QUOTES | ENT_SUBSTITUTE); ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="post" action="" class="ticket-form">
+        <input type="hidden" name="csrf_token"
+               value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES | ENT_SUBSTITUTE); ?>">
+
+        <div class="form-group">
+            <label for="title">Titre *</label>
+            <input id="title" name="title" required
+                   value="<?php echo htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE); ?>">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea id="description" name="description" required><?php
+                echo htmlspecialchars($_POST['description'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE);
+                ?></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="category">Catégorie *</label>
+                <select id="category" name="category" required>
+                    <?php foreach ($categories as $c): ?>
+                        <option value="<?php echo htmlspecialchars($c, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
+                                <?php echo (($_POST['category'] ?? '') === $c) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($c, ENT_QUOTES | ENT_SUBSTITUTE); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="priority">Priorité *</label>
+                <select id="priority" name="priority" required>
+                    <?php foreach ($priorities as $p): ?>
+                        <option value="<?php echo htmlspecialchars($p, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
+                                <?php echo (($_POST['priority'] ?? '') === $p) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($p, ENT_QUOTES | ENT_SUBSTITUTE); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Statut</label>
+                <select id="status" name="status">
+                    <?php foreach ($statuses as $s): ?>
+                        <option value="<?php echo htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
+                                <?php echo (($_POST['status'] ?? 'Ouvert') === $s) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Créer le ticket</button>
+        </div>
+    </form>
 </div>
-
-<p>Connecté en tant que :
-    <strong><?php echo htmlspecialchars($username, ENT_QUOTES | ENT_SUBSTITUTE); ?></strong>
-</p>
-
-<p>
-    <button type="button" onclick="window.location.href='listeTickets.php';">
-        Retour à mes tickets
-    </button>
-</p>
-
-<?php if ($errors): ?>
-    <div class="errors">
-        <ul>
-            <?php foreach ($errors as $e): ?>
-                <li><?php echo htmlspecialchars($e, ENT_QUOTES | ENT_SUBSTITUTE); ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
-
-<?php if ($success): ?>
-    <div class="success">
-        <?php echo htmlspecialchars($success, ENT_QUOTES | ENT_SUBSTITUTE); ?>
-    </div>
-<?php endif; ?>
-
-<form method="post" action="">
-    <input type="hidden" name="csrf_token"
-           value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES | ENT_SUBSTITUTE); ?>">
-
-    <label for="title">Titre *</label>
-    <input id="title" name="title" required
-           value="<?php echo htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE); ?>">
-
-    <label for="description">Description *</label>
-    <textarea id="description" name="description" required><?php
-        echo htmlspecialchars($_POST['description'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE);
-        ?></textarea>
-
-    <label for="category">Catégorie *</label>
-    <select id="category" name="category" required>
-        <?php foreach ($categories as $c): ?>
-            <option value="<?php echo htmlspecialchars($c, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
-                    <?php echo (($_POST['category'] ?? '') === $c) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($c, ENT_QUOTES | ENT_SUBSTITUTE); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-
-    <label for="priority">Priorité *</label>
-    <select id="priority" name="priority" required>
-        <?php foreach ($priorities as $p): ?>
-            <option value="<?php echo htmlspecialchars($p, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
-                    <?php echo (($_POST['priority'] ?? '') === $p) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($p, ENT_QUOTES | ENT_SUBSTITUTE); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-
-    <label for="status">Statut</label>
-    <select id="status" name="status">
-        <?php foreach ($statuses as $s): ?>
-            <option value="<?php echo htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
-                    <?php echo (($_POST['status'] ?? 'Ouvert') === $s) ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-
-    <button type="submit">Créer le ticket</button>
-</form>
 </body>
 </html>

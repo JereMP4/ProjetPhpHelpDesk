@@ -53,29 +53,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <title>Authentification</title>
+    <link href="style/login.css" rel="stylesheet">
 </head>
 <body>
+<div class="login-page">
+    <div class="login-card">
+        <h1 class="login-title">AUTHENTIFICATION</h1>
 
-<h1>AUTHENTIFICATION</h1>
+        <?php if (!empty($error)): ?>
+            <p class="error-message">
+                <?php echo htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE); ?>
+            </p>
+        <?php endif; ?>
 
-<?php if (!empty($error)): ?>
-    <p style="color:red;"><?php echo htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
-<?php endif; ?>
+        <form method="POST" class="login-form">
+            <div class="form-group">
+                <label for="nom">Nom d'utilisateur</label>
+                <input id="nom" type="text" name="nom" required
+                       value="<?php echo htmlspecialchars($_POST['nom'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE); ?>">
+            </div>
 
-<form method="POST">
-    <label>Nom d'utilisateur</label>
-    <input type="text" name="nom" required
-           value="<?php echo htmlspecialchars($_POST['nom'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE); ?>"><br><br>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input id="password" type="password" name="password" required>
+            </div>
 
-    <label>Mot de passe</label>
-    <input type="password" name="password" required><br><br>
-
-    <input type="submit" value="Valider">
-</form>
-
+            <div class="form-actions">
+                <input type="submit" value="Valider">
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>

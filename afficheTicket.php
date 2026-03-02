@@ -10,10 +10,17 @@ if (empty($_SESSION['username'])) {
     <head>
         <meta charset="utf-8">
         <title>Ticket</title>
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
-    <p>Accès réservé. Veuillez vous connecter.</p>
-    <button onclick="window.location.href='login.php';">Se connecter</button>
+    <div class="page-wrapper">
+        <p class="user-info">
+            Accès réservé. Veuillez vous connecter.
+        </p>
+        <button class="btn btn-primary" onclick="window.location.href='login.php';">
+            Se connecter
+        </button>
+    </div>
     </body>
     </html>
     <?php
@@ -23,10 +30,9 @@ if (empty($_SESSION['username'])) {
 $currentUser = $_SESSION['username'];
 $isTuteur    = !empty($_SESSION['is_tuteur']) && $_SESSION['is_tuteur'];
 
-// Récupération de l'id de ticket dans l'URL, par ex. ?id=3
-$ticketId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+// Récupération de l'id de ticket dans l'URL, par ex. ?id=...
+$ticketId = $_GET['id'] ?? '';
 
-// Chargement des tickets
 $file = __DIR__ . '/tickets.json';
 if (!file_exists($file)) {
     die('Fichier tickets.json introuvable');
@@ -39,10 +45,10 @@ if (!is_array($tickets)) {
     die('Format de tickets.json invalide');
 }
 
-// Recherche du ticket courant dans $tickets
+// Recherche du ticket courant
 $ticketIndex = null;
 foreach ($tickets as $index => $t) {
-    if ((int)$t['id'] === $ticketId) {
+    if ($t['id'] === $ticketId) {
         $ticketIndex = $index;
         break;
     }
@@ -56,10 +62,15 @@ if ($ticketIndex === null) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
-    <p>Ticket introuvable.</p>
-    <button onclick="window.location.href='listeTickets.php';">Retour à la liste</button>
+    <div class="page-wrapper">
+        <p class="user-info">Ticket introuvable.</p>
+        <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php';">
+            Retour à la liste
+        </button>
+    </div>
     </body>
     </html>
     <?php
@@ -68,9 +79,7 @@ if ($ticketIndex === null) {
 
 $ticket = $tickets[$ticketIndex];
 
-// Vérifier les droits :
-// - étudiant : ne peut voir que ses tickets
-// - tuteur : peut tout voir
+// Droits : étudiant = seulement ses tickets, tuteur = tout
 if (!$isTuteur && $ticket['author'] !== $currentUser) {
     http_response_code(403);
     ?>
@@ -79,10 +88,15 @@ if (!$isTuteur && $ticket['author'] !== $currentUser) {
     <head>
         <meta charset="utf-8">
         <title>Accès refusé</title>
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
-    <p>Vous n'avez pas accès à ce ticket.</p>
-    <button onclick="window.location.href='listeTickets.php';">Retour à la liste</button>
+    <div class="page-wrapper">
+        <p class="user-info">Vous n'avez pas accès à ce ticket.</p>
+        <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php';">
+            Retour à la liste
+        </button>
+    </div>
     </body>
     </html>
     <?php
@@ -99,14 +113,14 @@ if ($isTuteur && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_s
 
         file_put_contents($file, json_encode($tickets, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        header('Location: afficheTicket.php?id=' . $ticketId);
+        header('Location: afficheTicket.php?id=' . urlencode($ticketId));
         exit;
     }
 }
 
-// Traitement du formulaire d'ajout de commentaire
+// Ajout de commentaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_comment'])) {
-    $message = trim($_POST['message']);
+    $message = trim($_POST['message'] ?? '');
 
     if ($message !== '') {
         $auteur = $currentUser ?: 'Anonyme';
@@ -114,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_comment'])) {
         $nouveauCommentaire = [
                 'auteur'  => $auteur,
                 'date'    => date('Y-m-d H:i:s'),
-                'message' => $message
+                'message' => $message,
         ];
 
         if (!isset($tickets[$ticketIndex]['comments']) || !is_array($tickets[$ticketIndex]['comments'])) {
@@ -125,12 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_comment'])) {
 
         file_put_contents($file, json_encode($tickets, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        header('Location: afficheTicket.php?id=' . $ticketId);
+        header('Location: afficheTicket.php?id=' . urlencode($ticketId));
         exit;
     }
 }
 
-// Recharger la version à jour du ticket (après éventuelle écriture)
+// Version à jour
 $ticket = $tickets[$ticketIndex];
 ?>
 <!doctype html>
@@ -138,105 +152,132 @@ $ticket = $tickets[$ticketIndex];
 <head>
     <meta charset="utf-8">
     <title>Ticket <?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE); ?></title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width:800px; margin:2rem auto; padding:0 1rem; }
-        .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-        .field-row { display:flex; gap:8px; align-items:center; margin-bottom:4px; }
-        .field-row span:first-child { font-weight:bold; }
-        .ticket-box { border:1px solid #ccc; padding:10px; }
-        .comment { margin-top:1rem; padding:0.5rem; border:1px solid #ddd; }
-    </style>
+    <link rel="stylesheet" href="style/afficheTicket.css">
 </head>
 <body>
+<div class="page-wrapper">
 
-<div class="top-bar">
-    <h1>Ticket n°<?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE); ?></h1>
-    <button type="button"
-            onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>';">
-        Se déconnecter
-    </button>
-</div>
+    <header class="top-bar">
+        <div>
+            <h1>Ticket n°<?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE); ?></h1>
+            <p class="user-info">
+                Connecté en tant que
+                <strong><?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE); ?></strong>
+                <?= $isTuteur ? '(tuteur)' : '(étudiant)'; ?>
+            </p>
+        </div>
+        <button type="button" class="btn btn-outline"
+                onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>';">
+            Se déconnecter
+        </button>
+    </header>
 
-<p>Connecté en tant que
-    <strong><?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE); ?></strong>
-    <?= $isTuteur ? '(tuteur)' : '(étudiant)'; ?>
-</p>
+    <p class="back-link">
+        <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php';">
+            Retour à la liste
+        </button>
+    </p>
 
-<p>
-    <button onclick="window.location.href='listeTickets.php';">Retour à la liste</button>
-</p>
+    <section class="ticket-card">
+        <?php if ($isTuteur): ?>
+            <div class="ticket-row">
+                <span class="label">Étudiant :</span>
+                <span><?= htmlspecialchars($ticket['author'], ENT_QUOTES | ENT_SUBSTITUTE); ?></span>
+            </div>
+        <?php endif; ?>
 
-<div class="ticket-box">
+        <div class="ticket-row">
+            <span class="label">ID :</span>
+            <span><?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE); ?></span>
+        </div>
+
+        <div class="ticket-row">
+            <span class="label">Titre :</span>
+            <span><?= htmlspecialchars($ticket['title'], ENT_QUOTES | ENT_SUBSTITUTE); ?></span>
+        </div>
+
+        <div class="ticket-description">
+            <?= nl2br(htmlspecialchars($ticket['description'], ENT_QUOTES | ENT_SUBSTITUTE)); ?>
+        </div>
+
+        <div class="ticket-meta">
+            <span class="chip">
+                Catégorie :
+                <?= htmlspecialchars($ticket['category'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
+            </span>
+            <span class="chip">
+                Priorité :
+                <?= htmlspecialchars($ticket['priority'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
+            </span>
+            <span class="chip">
+                Statut :
+                <?= htmlspecialchars($ticket['status'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
+            </span>
+            <span class="chip">
+                Créé le
+                <?= htmlspecialchars($ticket['created_at'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
+            </span>
+        </div>
+    </section>
+
     <?php if ($isTuteur): ?>
-        <p class="field-row">
-            <span>Étudiant :</span>
-            <span><?= htmlspecialchars($ticket['author'], ENT_QUOTES | ENT_SUBSTITUTE); ?></span>
-        </p>
+        <section class="status-section">
+            <h2>Modifier le statut</h2>
+            <form method="post" action="" class="status-form">
+                <label for="status">Statut :</label>
+                <select name="status" id="status">
+                    <option value="ouvert"   <?= $ticket['status'] === 'ouvert'   ? 'selected' : '' ?>>Ouvert</option>
+                    <option value="en cours" <?= $ticket['status'] === 'en cours' ? 'selected' : '' ?>>En cours</option>
+                    <option value="résolu"   <?= $ticket['status'] === 'résolu'   ? 'selected' : '' ?>>Résolu</option>
+                </select>
+                <button type="submit" name="update_status" class="btn btn-primary">
+                    Mettre à jour
+                </button>
+            </form>
+        </section>
     <?php endif; ?>
 
-    <p class="field-row">
-        <span>ID :</span>
-        <span><?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE); ?></span>
-    </p>
+    <section class="comments-section">
+        <h2>Commentaires</h2>
 
-    <p class="field-row">
-        <span>Titre :</span>
-        <span><?= htmlspecialchars($ticket['title'], ENT_QUOTES | ENT_SUBSTITUTE); ?></span>
-    </p>
+        <?php if (!empty($ticket['comments'])): ?>
+            <div class="comments-list">
+                <?php foreach ($ticket['comments'] as $comment): ?>
+                    <article class="comment-card">
+                        <header class="comment-header">
+                            <span class="comment-author">
+                                <?= htmlspecialchars($comment['auteur'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
+                            </span>
+                            <span class="comment-date">
+                                <?= htmlspecialchars($comment['date'], ENT_QUOTES | ENT_SUBSTITUTE); ?>
+                            </span>
+                        </header>
+                        <p class="comment-body">
+                            <?= nl2br(htmlspecialchars($comment['message'], ENT_QUOTES | ENT_SUBSTITUTE)); ?>
+                        </p>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="no-comments">Aucun commentaire pour le moment.</p>
+        <?php endif; ?>
+    </section>
 
-    <p><?= nl2br(htmlspecialchars($ticket['description'], ENT_QUOTES | ENT_SUBSTITUTE)); ?></p>
+    <section class="add-comment-section">
+        <h2>Ajouter un commentaire</h2>
+        <form method="post" action="" class="comment-form">
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" name="add_comment" class="btn btn-primary">
+                    Envoyer
+                </button>
+            </div>
+        </form>
+    </section>
 
-    <p><strong>Catégorie :</strong>
-        <?= htmlspecialchars($ticket['category'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
-    <p><strong>Priorité :</strong>
-        <?= htmlspecialchars($ticket['priority'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
-    <p><strong>Statut :</strong>
-        <?= htmlspecialchars($ticket['status'], ENT_QUOTES | ENT_SUBSTITUTE); ?></p>
-    <p><small>Créé le
-            <?= htmlspecialchars($ticket['created_at'], ENT_QUOTES | ENT_SUBSTITUTE); ?></small></p>
 </div>
-
-<?php if ($isTuteur): ?>
-    <hr>
-    <h2>Modifier le statut du ticket</h2>
-    <form method="post" action="">
-        <label for="status">Statut :</label>
-        <select name="status" id="status">
-            <option value="ouvert"   <?= $ticket['status'] === 'ouvert'   ? 'selected' : '' ?>>Ouvert</option>
-            <option value="en cours" <?= $ticket['status'] === 'en cours' ? 'selected' : '' ?>>En cours</option>
-            <option value="résolu"   <?= $ticket['status'] === 'résolu'   ? 'selected' : '' ?>>Résolu</option>
-        </select>
-        <button type="submit" name="update_status">Mettre à jour</button>
-    </form>
-<?php endif; ?>
-
-<hr>
-
-<?php
-if (!empty($ticket['comments'])) {
-    echo '<h2>Commentaires</h2>';
-    foreach ($ticket['comments'] as $comment) {
-        echo '<div class="comment">';
-        echo '<p><strong>' . htmlspecialchars($comment['auteur'], ENT_QUOTES | ENT_SUBSTITUTE) . '</strong> - ' .
-                htmlspecialchars($comment['date'], ENT_QUOTES | ENT_SUBSTITUTE) . '</p>';
-        echo '<p>' . nl2br(htmlspecialchars($comment['message'], ENT_QUOTES | ENT_SUBSTITUTE)) . '</p>';
-        echo '</div>';
-    }
-} else {
-    echo '<p>Aucun commentaire pour le moment.</p>';
-}
-?>
-
-<hr>
-<h2>Ajouter un commentaire</h2>
-<form method="post" action="">
-    <div>
-        <label for="message">Message :</label><br>
-        <textarea id="message" name="message" rows="4" cols="50" required></textarea>
-    </div>
-    <br>
-    <button type="submit" name="add_comment">Envoyer</button>
-</form>
-
 </body>
 </html>
