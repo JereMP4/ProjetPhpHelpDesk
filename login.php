@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/db.php';
+
 $error = "";
 
 // Page de retour prioritaire : ?from=... puis éventuelle redirect_after_login
@@ -10,31 +12,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nom = trim($_POST['nom'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    // Charger les utilisateurs depuis users.json
-    $usersFile = __DIR__ . '/users.json';
-    $users = [];
+    if ($nom === '' || $password === '') {
+        $error = "Tous les champs sont obligatoires.";
+    } else {
+        // Requête préparée pour récupérer l'utilisateur
+        $stmt = $pdo->prepare('SELECT id, username, password_hash, role 
+                               FROM users 
+                               WHERE username = :username');
+        $stmt->execute([':username' => $nom]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (file_exists($usersFile)) {
-        $json = file_get_contents($usersFile);
-        $decoded = json_decode($json, true);
-        if (is_array($decoded)) {
-            $users = $decoded;
-        }
-    }
-
-    $found = false;
-
-    foreach ($users as $user) {
-        // Ici on compare en clair (username + password)
-        if ($user['username'] === $nom && $user['password'] === $password) {
-            $found = true;
-
+        if ($user && password_verify($password, $user['password_hash'])) {
+            // Login OK
             session_regenerate_id(true);
 
+            $_SESSION['user_id']   = $user['id'];
             $_SESSION['username']  = $user['username'];
-            $_SESSION['role']      = $user['role'] ?? 'student';
+            $_SESSION['role']      = $user['role'] ?? 'etudiant';
             $_SESSION['loggedin']  = true;
-            // flag tuteur pour les permissions
             $_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
 
             if (!empty($from)) {
@@ -44,11 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ticket.php');
             }
             exit;
+        } else {
+            $error = "Nom d'utilisateur ou mot de passe incorrect.";
         }
-    }
-
-    if (!$found) {
-        $error = "Nom d'utilisateur ou mot de passe incorrect.";
     }
 }
 ?>
@@ -66,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if (!empty($error)): ?>
             <p class="error-message">
-                <?php echo htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE); ?>
+                <?php echo htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>
             </p>
         <?php endif; ?>
 
@@ -74,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="nom">Nom d'utilisateur</label>
                 <input id="nom" type="text" name="nom" required
-                       value="<?php echo htmlspecialchars($_POST['nom'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE); ?>">
+                       value="<?php echo htmlspecialchars($_POST['nom'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>">
             </div>
 
             <div class="form-group">

@@ -29,7 +29,14 @@
         "category": "TD",
         "priority": "Moyenne",
         "status": "résolu",
-        "created_at": "2026-02-18 21:36:37"
+        "created_at": "2026-02-18 21:36:37",
+        "comments": [
+            {
+                "auteur": "tuteur",
+                "date": "2026-03-02 13:07:55",
+                "message": "test"
+            }
+        ]
     },
     {
         "id": "ticket_0abe93cffd17de77",
