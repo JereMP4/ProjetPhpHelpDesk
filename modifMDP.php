@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <title>Modifier mon mot de passe</title>
-    /modifMDP.css">
+    <link href="style/modifMDP.css" rel="stylesheet">
 </head>
 <body>
 <div class="page-wrapper">
@@ -117,17 +117,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                value="<?= htmlspecialchars($csrf_token, ENT_QUOTES | ENT_SUBSTITUTE); ?>">
 
         <div class="form-group">
-            abel for="old_password">Ancien mot de passe</label>
+            <label for="old_password">Ancien mot de passe</label>
             <input id="old_password" name="old_password" type="password" required>
         </div>
 
         <div class="form-group">
-            abel for="new_password">Nouveau mot de passe</label>
+            <label for="new_password">Nouveau mot de passe</label>
             <input id="new_password" name="new_password" type="password" required>
         </div>
 
         <div class="form-group">
-            abel for="confirm_password">Confirmer le nouveau mot de passe</label>
+            <label for="confirm_password">Confirmer le nouveau mot de passe</label>
             <input id="confirm_password" name="confirm_password" type="password" required>
         </div>
 
