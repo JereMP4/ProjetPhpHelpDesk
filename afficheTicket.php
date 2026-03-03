@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 require_once __DIR__ . '/db.php';
 
 // Vérification connexion
@@ -12,7 +11,7 @@ if (empty($_SESSION['username'])) {
     <head>
         <meta charset="utf-8">
         <title>Ticket</title>
-        <link href="style/afficheTicket.css" rel="stylesheet">
+        /afficheTicket.css" rel="stylesheet">
     </head>
     <body>
     <div class="page-wrapper">
@@ -25,8 +24,25 @@ if (empty($_SESSION['username'])) {
     exit;
 }
 
-$currentUser = $_SESSION['username'];
-$isTuteur    = !empty($_SESSION['is_tuteur']) && $_SESSION['is_tuteur'];
+// --- Vérification du rôle directement en BDD (modèle PDO de login.php) ---
+$stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE username = :username");
+$stmt->execute([':username' => $_SESSION['username']]);
+$currentUserData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Si l'utilisateur n'existe plus en BDD → on détruit la session
+if (!$currentUserData) {
+    session_destroy();
+    header('Location: login.php');
+    exit;
+}
+
+// Mise à jour de la session avec les données fraîches de la BDD
+$_SESSION['userid']    = $currentUserData['id'];
+$_SESSION['role']      = $currentUserData['role'] ?? 'etudiant';
+$_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
+
+$currentUser = $currentUserData['username'];
+$isTuteur    = $_SESSION['is_tuteur'];
 
 // Récupération de l'id de ticket dans l'URL, par ex. ?id=...
 if (!isset($_GET['id'])) {
@@ -37,7 +53,7 @@ if (!isset($_GET['id'])) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
-        <link href="style/afficheTicket.css" rel="stylesheet">
+        /afficheTicket.css" rel="stylesheet">
     </head>
     <body>
     <div class="page-wrapper">
@@ -65,7 +81,7 @@ if (!$ticket) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
-        <link href="style/afficheTicket.css" rel="stylesheet">
+        /afficheTicket.css" rel="stylesheet">
     </head>
     <body>
     <div class="page-wrapper">
@@ -87,7 +103,7 @@ if (!$isTuteur && $ticket['author'] !== $currentUser) {
     <head>
         <meta charset="utf-8">
         <title>Accès refusé</title>
-        <link href="style/afficheTicket.css" rel="stylesheet">
+        /afficheTicket.css" rel="stylesheet">
     </head>
     <body>
     <div class="page-wrapper">
@@ -102,8 +118,8 @@ if (!$isTuteur && $ticket['author'] !== $currentUser) {
 
 // Changement de statut par un tuteur
 if ($isTuteur && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
-    $newStatus      = $_POST['status'] ?? '';
-    $allowedStatuses = ['ouvert', 'en cours', 'résolu'];
+    $newStatus       = $_POST['status'] ?? '';
+    $allowedStatuses = ['Ouvert', 'En cours', 'Résolu'];
     if (in_array($newStatus, $allowedStatuses, true)) {
         $stmt = $pdo->prepare('UPDATE tickets SET status = :status WHERE id = :id');
         $stmt->execute([':status' => $newStatus, ':id' => $ticketId]);
@@ -116,18 +132,12 @@ if ($isTuteur && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_s
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_comment'])) {
     $message = trim($_POST['message'] ?? '');
     if ($message !== '') {
-        $stmt = $pdo->prepare('SELECT id FROM users WHERE username = :username');
-        $stmt->execute([':username' => $currentUser]);
-        $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($userRow) {
-            $stmt = $pdo->prepare('INSERT INTO comments (ticket_id, author_id, message, created_at) VALUES (:ticket_id, :author_id, :message, NOW())');
-            $stmt->execute([
-                    ':ticket_id' => $ticketId,
-                    ':author_id' => $userRow['id'],
-                    ':message'   => $message,
-            ]);
-        }
+        $stmt = $pdo->prepare('INSERT INTO comments (ticket_id, author_id, message, created_at) VALUES (:ticket_id, :author_id, :message, NOW())');
+        $stmt->execute([
+                ':ticket_id' => $ticketId,
+                ':author_id' => $_SESSION['userid'],
+                ':message'   => $message,
+        ]);
     }
     header('Location: afficheTicket.php?id=' . urlencode($ticketId));
     exit;
@@ -143,7 +153,7 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="utf-8">
     <title>Ticket <?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></title>
-    <link href="style/afficheTicket.css" rel="stylesheet">
+    /afficheTicket.css" rel="stylesheet">
 </head>
 <body>
 <div class="page-wrapper">
@@ -195,11 +205,11 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <section class="status-section">
             <h2>Modifier le statut</h2>
             <form method="post" action="" class="status-form">
-                <label for="status">Statut</label>
+                abel for="status">Statut</label>
                 <select name="status" id="status">
-                    <option value="ouvert"    <?= $ticket['status'] === 'ouvert'    ? 'selected' : '' ?>>Ouvert</option>
-                    <option value="en cours"  <?= $ticket['status'] === 'en cours'  ? 'selected' : '' ?>>En cours</option>
-                    <option value="résolu"    <?= $ticket['status'] === 'résolu'    ? 'selected' : '' ?>>Résolu</option>
+                    <option value="Ouvert"   <?= $ticket['status'] === 'Ouvert'   ? 'selected' : '' ?>>Ouvert</option>
+                    <option value="En cours" <?= $ticket['status'] === 'En cours' ? 'selected' : '' ?>>En cours</option>
+                    <option value="Résolu"   <?= $ticket['status'] === 'Résolu'   ? 'selected' : '' ?>>Résolu</option>
                 </select>
                 <button type="submit" name="update_status" class="btn btn-primary">Mettre à jour</button>
             </form>
@@ -229,7 +239,7 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h2>Ajouter un commentaire</h2>
         <form method="post" action="" class="comment-form">
             <div class="form-group">
-                <label for="message">Message</label>
+                abel for="message">Message</label>
                 <textarea id="message" name="message" rows="4" required></textarea>
             </div>
             <div class="form-actions">
