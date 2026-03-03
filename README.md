@@ -4,6 +4,8 @@ Université Bourgogne Europe – L3 Informatique – Développement Applications
 
 ## Membres du groupe
 - THIEBLEMONT Jérémy
+- RAHALI Thiziri
+- COIPELET Maxence
 
 ## Choix techniques
 - **Langage** : PHP sans framework
@@ -25,4 +27,5 @@ Université Bourgogne Europe – L3 Informatique – Développement Applications
 ## Script SQL
 Voir `base.sql` — contient la création des tables `users`, `tickets` et `comments`.
 
-© 2026 THIEBLEMONT Jérémy.
+© 2026 THIEBLEMONT Jérémy. Tous droits réservés. Utilisation, modification et redistribution interdites sans autorisation écrite.
+
