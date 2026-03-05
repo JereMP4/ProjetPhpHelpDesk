@@ -26,3 +26,31 @@ CREATE TABLE comments (
                           FOREIGN KEY (ticket_id) REFERENCES tickets(id),
                           FOREIGN KEY (author_id) REFERENCES users(id)
 );
+
+CREATE TRIGGER `tickets_only_student2` BEFORE UPDATE ON `tickets`
+ FOR EACH ROW BEGIN
+  DECLARE user_role VARCHAR(20);
+
+  SELECT role INTO user_role
+  FROM users
+  WHERE id = NEW.author_id;
+
+  IF user_role <> 'etudiant' THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Seuls les étudiants peuvent créer des tickets';
+  END IF;
+END
+
+CREATE TRIGGER `tickets_only_student` BEFORE INSERT ON `tickets`
+ FOR EACH ROW BEGIN
+  DECLARE user_role VARCHAR(20);
+
+  SELECT role INTO user_role
+  FROM users
+  WHERE id = NEW.author_id;
+
+  IF user_role <> 'etudiant' THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Seuls les étudiants peuvent créer des tickets';
+  END IF;
+END
