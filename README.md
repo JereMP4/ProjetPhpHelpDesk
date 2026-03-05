@@ -23,9 +23,11 @@ Université Bourgogne Europe – L3 Informatique – Développement Applications
 - `db.php` + `config.local.php` — Connexion PDO
 - `base.sql` — Script SQL de création des tables
 - `style/` — Feuilles de style CSS
+- `hash.php` - Sert à connaître le hash d'un mot de passe (pour un ajout en base de données, pour des questions de sécurité, l'inverse n'est pas possible)
 
 ## Script SQL
-Voir `base.sql` — contient la création des tables `users`, `tickets` et `comments`.
+Voir `base.sql` — contient la création des tables `users`, `tickets` et `comments` ; Présence de trigger SQL pour limiter la création de tickets uniquement aux étudiants
 
 © 2026 THIEBLEMONT Jérémy. Tous droits réservés. Utilisation, modification et redistribution interdites sans autorisation écrite.
+
 
