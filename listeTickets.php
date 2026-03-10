@@ -2,30 +2,14 @@
 session_start();
 require_once __DIR__ . '/db.php';
 
-// --- Vérification connexion ---
+// --- Vérification du rôle directement en BDD (modèle PDO de login.php) ---
 if (empty($_SESSION['username'])) {
-    // Mémoriser la page pour revenir après login
+    // On ne fait plus l'affichage HTML ici : le header.php gérera la redirection vers login.php
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    ?>
-    <!doctype html>
-    <html lang="fr">
-    <head>
-        <meta charset="utf-8">
-        <title>Espace Personnel</title>
-        <link href="style/listeTickets.css" rel="stylesheet">
-    </head>
-    <body>
-    <div class="page-wrapper">
-        <p class="user-info">Accès réservé aux étudiants et tuteurs. Veuillez vous connecter.</p>
-        <button class="btn btn-primary" onclick="window.location.href='login.php'">Se connecter</button>
-    </div>
-    </body>
-    </html>
-    <?php
+    header('Location: login.php');
     exit;
 }
 
-// --- ✅ Vérification du rôle directement en BDD (modèle PDO de login.php) ---
 $stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE username = :username");
 $stmt->execute([':username' => $_SESSION['username']]);
 $currentUserData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -91,24 +75,11 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
 <div class="page-wrapper">
 
-    <div class="top-bar">
-        <h1>Espace Personnel</h1>
-        <div class="profile-wrapper">
-            <button type="button" class="profile-button" id="profileToggle">
-                <span class="profile-avatar"><?= strtoupper(substr($currentUser, 0, 1)) ?></span>
-                <span class="profile-name"><?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-            </button>
-            <div class="profile-menu" id="profileMenu">
-                <button type="button" onclick="window.location.href='modifMDP.php'">Modifier mon mot de passe</button>
-                <button type="button" onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>'">Se déconnecter</button>
-            </div>
-        </div>
-    </div>
-
-    <p class="user-info">
-        Connecté en tant que <strong><?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE) ?></strong>
-        <?php if ($isTuteur): ?> — tuteur<?php else: ?> — étudiant<?php endif; ?>
-    </p>
+    <?php
+    // Header factorisé avec redirection si pas connecté
+    $pageTitle = 'Espace Personnel';
+    include __DIR__ . '/header.php';
+    ?>
 
     <hr>
 
@@ -185,23 +156,5 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
 </div>
-
-<script>
-    const profileToggle = document.getElementById('profileToggle');
-    const profileMenu   = document.getElementById('profileMenu');
-
-    if (profileToggle && profileMenu) {
-        profileToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('profile-menu-open');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!profileMenu.contains(e.target) && !profileToggle.contains(e.target)) {
-                profileMenu.classList.remove('profile-menu-open');
-            }
-        });
-    }
-</script>
-
 </body>
 </html>

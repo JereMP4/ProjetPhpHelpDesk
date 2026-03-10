@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 require_once __DIR__ . '/db.php';
 
 if (empty($_SESSION['username'])) {
@@ -10,7 +9,8 @@ if (empty($_SESSION['username'])) {
 }
 
 $currentUser   = $_SESSION['username'];
-$currentUserId = $_SESSION['user_id'];
+// Harmonisation avec listeTickets.php / afficheTicket.php / ticket.php : `userid`
+$currentUserId = $_SESSION['userid'] ?? null;
 
 $errors  = [];
 $success = null;
@@ -32,36 +32,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($oldPassword === '' || $newPassword === '' || $confirm === '') {
         $errors[] = 'Tous les champs sont obligatoires.';
-    } else if ($newPassword !== $confirm) {
+    } elseif ($newPassword !== $confirm) {
         $errors[] = 'La confirmation ne correspond pas au nouveau mot de passe.';
     }
 
     if (empty($errors)) {
-        // Récupérer le hash actuel depuis la BDD
-        $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = :id');
-        $stmt->execute([':id' => $currentUserId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            $errors[] = 'Utilisateur introuvable.';
-        } elseif (!password_verify($oldPassword, $user['password_hash'])) {
-            $errors[] = 'Ancien mot de passe incorrect.';
+        if ($currentUserId === null) {
+            $errors[] = 'Utilisateur introuvable en session.';
         } else {
-            // Mettre à jour avec le nouveau hash
-            $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt    = $pdo->prepare('UPDATE users SET password_hash = :hash WHERE id = :id');
-            $ok      = $stmt->execute([
-                    ':hash' => $newHash,
-                    ':id'   => $currentUserId,
-            ]);
+            // Récupérer le hash actuel depuis la BDD
+            $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = :id');
+            $stmt->execute([':id' => $currentUserId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$ok) {
-                $errors[] = 'Impossible de mettre à jour le mot de passe.';
+            if (!$user) {
+                $errors[] = 'Utilisateur introuvable.';
+            } elseif (!password_verify($oldPassword, $user['password_hash'])) {
+                $errors[] = 'Ancien mot de passe incorrect.';
             } else {
-                $success = 'Mot de passe modifié avec succès.';
-                // éviter resoumission
-                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-                $csrf_token             = $_SESSION['csrf_token'];
+                // Mettre à jour avec le nouveau hash
+                $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+                $stmt    = $pdo->prepare('UPDATE users SET password_hash = :hash WHERE id = :id');
+                $ok      = $stmt->execute([
+                        ':hash' => $newHash,
+                        ':id'   => $currentUserId,
+                ]);
+
+                if (!$ok) {
+                    $errors[] = 'Impossible de mettre à jour le mot de passe.';
+                } else {
+                    $success = 'Mot de passe modifié avec succès.';
+                    // éviter resoumission
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+                    $csrf_token             = $_SESSION['csrf_token'];
+                }
             }
         }
     }
@@ -76,18 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <div class="page-wrapper">
-    <header class="top-bar">
-        <h1>Modifier mon mot de passe</h1>
-        <button class="btn btn-outline"
-                onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>';">
-            Se déconnecter
-        </button>
-    </header>
 
-    <p class="user-info">
-        Connecté en tant que :
-        <strong><?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE); ?></strong>
-    </p>
+    <?php
+    // Header factorisé avec menu profil
+    $pageTitle = 'Modifier mon mot de passe';
+    include __DIR__ . '/header.php';
+    ?>
 
     <p class="back-link">
         <button class="btn btn-secondary"
@@ -100,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert alert-error">
             <ul>
                 <?php foreach ($errors as $e): ?>
-                    ><?= htmlspecialchars($e, ENT_QUOTES | ENT_SUBSTITUTE); ?></li>
+                    <li><?= htmlspecialchars($e, ENT_QUOTES | ENT_SUBSTITUTE); ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>

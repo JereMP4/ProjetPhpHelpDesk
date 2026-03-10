@@ -9,22 +9,7 @@ require_once __DIR__ . '/db.php';
 // --- Vérification connexion ---
 if (empty($_SESSION['username'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    ?>
-    <!doctype html>
-    <html lang="fr">
-    <head>
-        <meta charset="utf-8">
-        <title>Créer un ticket</title>
-        <link href="style/ticket.css" rel="stylesheet">
-    </head>
-    <body>
-    <div class="page-wrapper">
-        <p class="user-info">Accès réservé aux étudiants. Veuillez vous connecter avec un compte étudiant.</p>
-        <button class="btn btn-primary" onclick="window.location.href='login.php'">Se connecter</button>
-    </div>
-    </body>
-    </html>
-    <?php
+    header('Location: login.php');
     exit;
 }
 
@@ -78,8 +63,8 @@ $csrfToken = $_SESSION['csrf_token'];
 
 // --- Valeurs autorisées ---
 $categories = ['Cours', 'TD', 'TP'];
-$priorities  = ['Basse', 'Moyenne', 'Haute'];
-$statuses    = ['Ouvert', 'En cours', 'Résolu'];
+$priorities = ['Basse', 'Moyenne', 'Haute'];
+$statuses   = ['Ouvert', 'En cours', 'Résolu'];
 
 // --- Traitement du formulaire ---
 $errors  = [];
@@ -98,14 +83,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $priority    = $_POST['priority']         ?? '';
     $status      = $_POST['status']           ?? 'Ouvert';
 
-    if (empty($title))                                  $errors[] = 'Le titre est requis.';
-    if (empty($description))                            $errors[] = 'La description est requise.';
-    if (!in_array($category, $categories, true))        $errors[] = 'Catégorie invalide.';
-    if (!in_array($priority, $priorities, true))        $errors[] = 'Priorité invalide.';
-    if (!in_array($status,   $statuses,   true))        $errors[] = 'Statut invalide.';
+    if (empty($title))                           $errors[] = 'Le titre est requis.';
+    if (empty($description))                     $errors[] = 'La description est requise.';
+    if (!in_array($category,  $categories, true)) $errors[] = 'Catégorie invalide.';
+    if (!in_array($priority,  $priorities, true)) $errors[] = 'Priorité invalide.';
+    if (!in_array($status,    $statuses,   true)) $errors[] = 'Statut invalide.';
 
     if (empty($errors)) {
-        // ✅ Insertion en BDD via PDO (remplace l'écriture dans tickets.json)
+        // Insertion en BDD via PDO
         $stmt = $pdo->prepare("
             INSERT INTO tickets (author_id, title, description, category, priority, status, created_at)
             VALUES (:author_id, :title, :description, :category, :priority, :status, NOW())
@@ -147,14 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="page-wrapper">
 
-    <div class="top-bar">
-        <h1>Créer un ticket</h1>
-        <button type="button" class="btn btn-outline" onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>'">
-            Se déconnecter
-        </button>
-    </div>
-
-    <p class="user-info">Connecté en tant que <strong><?= htmlspecialchars($username, ENT_QUOTES | ENT_SUBSTITUTE) ?></strong></p>
+    <?php
+    // Header factorisé avec menu profil
+    $pageTitle = 'Créer un ticket';
+    include __DIR__ . '/header.php';
+    ?>
 
     <p class="back-link">
         <button type="button" class="btn btn-secondary" onclick="window.location.href='listeTickets.php'">Retour à mes tickets</button>
@@ -164,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert alert-error">
             <ul>
                 <?php foreach ($errors as $e): ?>
-                    ><?= htmlspecialchars($e, ENT_QUOTES | ENT_SUBSTITUTE) ?></li>
+                    <li><?= htmlspecialchars($e, ENT_QUOTES | ENT_SUBSTITUTE) ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
@@ -181,7 +163,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="form-group">
             <label for="title">Titre</label>
-            <input id="title" name="title" type="text" required value="<?= htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE) ?>">
+            <input id="title" name="title" type="text" required
+                   value="<?= htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE) ?>">
         </div>
 
         <div class="form-group">
