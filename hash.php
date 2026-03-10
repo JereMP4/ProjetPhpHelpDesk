@@ -19,7 +19,7 @@ if (!isset($_SESSION['access_ok'])) {
         <head>
             <meta charset="utf-8">
             <title>Accès générateur de hash</title>
-            <link rel="stylesheet" href="hash.css">
+            <link rel="stylesheet" href="style/hash.css">
         </head>
         <body>
         <div class="login-page">

@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Login OK
             session_regenerate_id(true);
 
-            $_SESSION['user_id']   = $user['id'];
+            $_SESSION['userid']   = $user['id'];
             $_SESSION['username']  = $user['username'];
             $_SESSION['role']      = $user['role'] ?? 'etudiant';
             $_SESSION['loggedin']  = true;
@@ -34,10 +34,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!empty($from)) {
                 unset($_SESSION['redirect_after_login']);
-                header("Location: $from");
+                // Sécurité : on rejette toute URL externe (avec un host)
+                $parsed = parse_url($from);
+                if ($parsed === false || isset($parsed['host'])) {
+                    header('Location: listeTickets.php');
+                } else {
+                    header('Location: ' . $from);
+                }
             } else {
-                header('Location: ticket.php');
+                header('Location: listeTickets.php');
             }
+
             exit;
         } else {
             $error = "Nom d'utilisateur ou mot de passe incorrect.";

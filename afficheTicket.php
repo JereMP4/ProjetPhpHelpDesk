@@ -2,19 +2,18 @@
 session_start();
 require_once __DIR__ . '/db.php';
 
-// Vérification connexion (cohérent avec listeTickets)
+// Vérification connexion
 if (empty($_SESSION['username'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     header('Location: login.php');
     exit;
 }
 
-// --- Vérification du rôle directement en BDD (modèle PDO de login.php) ---
+// Vérification du rôle directement en BDD
 $stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE username = :username");
 $stmt->execute([':username' => $_SESSION['username']]);
 $currentUserData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Si l'utilisateur n'existe plus en BDD → on détruit la session
 if (!$currentUserData) {
     session_destroy();
     header('Location: login.php');
@@ -29,7 +28,13 @@ $_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
 $currentUser = $currentUserData['username'];
 $isTuteur    = $_SESSION['is_tuteur'];
 
-// Récupération de l'id de ticket dans l'URL, par ex. ?id=...
+// --- CSRF token ---
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+}
+$csrfToken = $_SESSION['csrf_token'];
+
+// Récupération de l'id de ticket dans l'URL
 if (!isset($_GET['id'])) {
     http_response_code(400);
     ?>
@@ -38,7 +43,7 @@ if (!isset($_GET['id'])) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
-        <link rel="stylesheet" href="style/afficheTicket.css">
+        /afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -66,7 +71,7 @@ if (!$ticket) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
-        <link rel="stylesheet" href="style/afficheTicket.css">
+        /afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -79,8 +84,8 @@ if (!$ticket) {
     exit;
 }
 
-// Droits : étudiant seulement ses tickets, tuteur tout
-if (!$isTuteur && $ticket['author'] !== $currentUser) {
+// Vérification accès : un étudiant ne peut voir que ses propres tickets
+if (!$isTuteur && $ticket['author_id'] !== $_SESSION['userid']) {
     http_response_code(403);
     ?>
     <!doctype html>
@@ -88,7 +93,7 @@ if (!$isTuteur && $ticket['author'] !== $currentUser) {
     <head>
         <meta charset="utf-8">
         <title>Accès refusé</title>
-        <link rel="stylesheet" href="style/afficheTicket.css">
+        /afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -101,13 +106,20 @@ if (!$isTuteur && $ticket['author'] !== $currentUser) {
     exit;
 }
 
-// Changement de statut par un tuteur
-if ($isTuteur && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
-    $newStatus       = $_POST['status'] ?? '';
-    $allowedStatuses = ['Ouvert', 'En cours', 'Résolu'];
-    if (in_array($newStatus, $allowedStatuses, true)) {
-        $stmt = $pdo->prepare('UPDATE tickets SET status = :status WHERE id = :id');
-        $stmt->execute([':status' => $newStatus, ':id' => $ticketId]);
+// Modification du statut (tuteur uniquement)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
+    // Vérification CSRF
+    if (empty($_POST['csrf_token']) || !hash_equals($csrfToken, $_POST['csrf_token'])) {
+        http_response_code(403);
+        die('Jeton CSRF invalide.');
+    }
+    if ($isTuteur) {
+        $allowed = ['Ouvert', 'En cours', 'Résolu'];
+        $newStatus = $_POST['status'] ?? '';
+        if (in_array($newStatus, $allowed, true)) {
+            $stmt = $pdo->prepare('UPDATE tickets SET status = :status WHERE id = :id');
+            $stmt->execute([':status' => $newStatus, ':id' => $ticketId]);
+        }
     }
     header('Location: afficheTicket.php?id=' . urlencode($ticketId));
     exit;
@@ -115,6 +127,11 @@ if ($isTuteur && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_s
 
 // Ajout de commentaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_comment'])) {
+    // Vérification CSRF
+    if (empty($_POST['csrf_token']) || !hash_equals($csrfToken, $_POST['csrf_token'])) {
+        http_response_code(403);
+        die('Jeton CSRF invalide.');
+    }
     $message = trim($_POST['message'] ?? '');
     if ($message !== '') {
         $stmt = $pdo->prepare('INSERT INTO comments (ticket_id, author_id, message, created_at) VALUES (:ticket_id, :author_id, :message, NOW())');
@@ -138,52 +155,32 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="utf-8">
     <title>Ticket <?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></title>
-    <link rel="stylesheet" href="style/afficheTicket.css">
+    /afficheTicket.css">
 </head>
 <body>
 <div class="page-wrapper">
 
-    <?php
-    // Header factorisé (menu profil + redirection si pas connecté)
-    $pageTitle = 'Ticket n°' . htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE);
-    include __DIR__ . '/header.php';
-    ?>
+    <?php require_once __DIR__ . '/header.php'; ?>
 
-    <p class="back-link">
-        <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php'">Retour à la liste</button>
-    </p>
+    <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php'">Retour à la liste</button>
 
-    <section class="ticket-card">
-        <?php if ($isTuteur): ?>
-            <div class="ticket-row">
-                <span class="label">Étudiant</span>
-                <span><?= htmlspecialchars($ticket['author'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-            </div>
-        <?php endif; ?>
-        <div class="ticket-row">
-            <span class="label">ID</span>
-            <span><?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-        </div>
-        <div class="ticket-row">
-            <span class="label">Titre</span>
-            <span><?= htmlspecialchars($ticket['title'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-        </div>
-        <div class="ticket-description">
-            <?= nl2br(htmlspecialchars($ticket['description'], ENT_QUOTES | ENT_SUBSTITUTE)) ?>
-        </div>
-        <div class="ticket-meta">
-            <span class="chip">Catégorie <?= htmlspecialchars($ticket['category'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-            <span class="chip">Priorité <?= htmlspecialchars($ticket['priority'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-            <span class="chip">Statut <?= htmlspecialchars($ticket['status'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-            <span class="chip">Créé le <?= htmlspecialchars($ticket['created_at'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-        </div>
-    </section>
+    <div class="ticket-detail">
+        <p><strong>ID :</strong> <?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Auteur :</strong> <?= htmlspecialchars($ticket['author'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Titre :</strong> <?= htmlspecialchars($ticket['title'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Description :</strong> <?= htmlspecialchars($ticket['description'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Catégorie :</strong> <?= htmlspecialchars($ticket['category'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Priorité :</strong> <?= htmlspecialchars($ticket['priority'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Statut :</strong> <?= htmlspecialchars($ticket['status'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+        <p><strong>Créé le :</strong> <?= htmlspecialchars($ticket['created_at'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+    </div>
 
     <?php if ($isTuteur): ?>
-        <section class="status-section">
+        <section class="status-update">
             <h2>Modifier le statut</h2>
-            <form method="post" action="" class="status-form">
-                <label for="status">Statut</label>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE) ?>">
+                abel for="status">Statut</label>
                 <select name="status" id="status">
                     <option value="Ouvert"   <?= $ticket['status'] === 'Ouvert'   ? 'selected' : '' ?>>Ouvert</option>
                     <option value="En cours" <?= $ticket['status'] === 'En cours' ? 'selected' : '' ?>>En cours</option>
@@ -194,37 +191,33 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </section>
     <?php endif; ?>
 
-    <section class="comments-section">
+    <section class="comments">
         <h2>Commentaires</h2>
-        <?php if (!empty($comments)): ?>
-            <div class="comments-list">
-                <?php foreach ($comments as $comment): ?>
-                    <article class="comment-card">
-                        <header class="comment-header">
-                            <span class="comment-author"><?= htmlspecialchars($comment['auteur'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-                            <span class="comment-date"><?= htmlspecialchars($comment['date'], ENT_QUOTES | ENT_SUBSTITUTE) ?></span>
-                        </header>
-                        <p class="comment-body"><?= nl2br(htmlspecialchars($comment['message'], ENT_QUOTES | ENT_SUBSTITUTE)) ?></p>
-                    </article>
-                <?php endforeach; ?>
-            </div>
+        <?php if (empty($comments)): ?>
+            <p>Aucun commentaire pour le moment.</p>
         <?php else: ?>
-            <p class="no-comments">Aucun commentaire pour le moment.</p>
+            <?php foreach ($comments as $comment): ?>
+                <div class="comment">
+                    <p class="comment-meta">
+                        <strong><?= htmlspecialchars($comment['auteur'], ENT_QUOTES | ENT_SUBSTITUTE) ?></strong>
+                        — <?= htmlspecialchars($comment['date'], ENT_QUOTES | ENT_SUBSTITUTE) ?>
+                    </p>
+                    <p><?= htmlspecialchars($comment['message'], ENT_QUOTES | ENT_SUBSTITUTE) ?></p>
+                </div>
+            <?php endforeach; ?>
         <?php endif; ?>
     </section>
 
-    <section class="add-comment-section">
+    <section class="add-comment">
         <h2>Ajouter un commentaire</h2>
-        <form method="post" action="" class="comment-form">
-            <div class="form-group">
-                <label for="message">Message</label>
-                <textarea id="message" name="message" rows="4" required></textarea>
-            </div>
-            <div class="form-actions">
-                <button type="submit" name="add_comment" class="btn btn-primary">Envoyer</button>
-            </div>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE) ?>">
+            abel for="message">Message</label>
+            <textarea id="message" name="message" required></textarea>
+            <button type="submit" name="add_comment" class="btn btn-primary">Envoyer</button>
         </form>
     </section>
+
 </div>
 </body>
 </html>
