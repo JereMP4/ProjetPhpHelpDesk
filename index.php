@@ -12,7 +12,7 @@ session_start();
 <div class="home-page">
     <div class="home-hero">
         <span class="badge">Support L3 Info</span>
-        <h1 class="home-title">Espace de tickets étudiants</h1>
+        <h1 class="home-title">HelpDesk</h1>
         <p class="home-subtitle">
             Pose tes questions de cours, TD ou TP et suis l'avancement de tes demandes
             en temps réel avec les tuteurs.
@@ -35,7 +35,7 @@ session_start();
         <div class="home-meta">
             <span class="chip">Création de tickets</span>
             <span class="chip">Suivi des réponses</span>
-            <span class="chip">Rôle étudiant / tuteur</span>
+            <span class="chip">Suivi personalisé</span>
         </div>
     </div>
 </div>

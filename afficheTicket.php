@@ -11,7 +11,7 @@ if (empty($_SESSION['username'])) {
     <head>
         <meta charset="utf-8">
         <title>Ticket</title>
-        /afficheTicket.css" rel="stylesheet">
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -53,7 +53,7 @@ if (!isset($_GET['id'])) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
-        /afficheTicket.css" rel="stylesheet">
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -81,7 +81,7 @@ if (!$ticket) {
     <head>
         <meta charset="utf-8">
         <title>Ticket introuvable</title>
-        /afficheTicket.css" rel="stylesheet">
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -103,7 +103,7 @@ if (!$isTuteur && $ticket['author'] !== $currentUser) {
     <head>
         <meta charset="utf-8">
         <title>Accès refusé</title>
-        /afficheTicket.css" rel="stylesheet">
+        <link rel="stylesheet" href="style/afficheTicket.css">
     </head>
     <body>
     <div class="page-wrapper">
@@ -153,23 +153,36 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="utf-8">
     <title>Ticket <?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></title>
-    /afficheTicket.css" rel="stylesheet">
+    <link rel="stylesheet" href="style/afficheTicket.css">
 </head>
 <body>
 <div class="page-wrapper">
-    <header class="top-bar">
-        <div>
-            <h1>Ticket n°<?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></h1>
-            <p class="user-info">
-                Connecté en tant que <strong><?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE) ?></strong>
-                <?= $isTuteur ? '– tuteur' : '– étudiant' ?>
-            </p>
+
+    <!-- Top bar identique à listeTickets -->
+    <div class="top-bar">
+        <h1>Ticket n°<?= htmlspecialchars($ticket['id'], ENT_QUOTES | ENT_SUBSTITUTE) ?></h1>
+
+        <div class="profile-wrapper">
+            <button type="button" class="profile-button" id="profileToggle">
+                <span class="profile-avatar"><?= strtoupper(substr($currentUser, 0, 1)) ?></span>
+                <span class="profile-name">
+                <?= htmlspecialchars($currentUser, ENT_QUOTES | ENT_SUBSTITUTE) ?>
+                    
+            </span>
+            </button>
+            <div class="profile-menu" id="profileMenu">
+                <button type="button" onclick="window.location.href='modifMDP.php'">
+                    Modifier mon mot de passe
+                </button>
+                <button type="button"
+                        onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>'">
+                    Se déconnecter
+                </button>
+            </div>
         </div>
-        <button type="button" class="btn btn-outline"
-                onclick="window.location.href='logout.php?from=<?= urlencode($_SERVER['REQUEST_URI']) ?>';">
-            Se déconnecter
-        </button>
-    </header>
+    </div>
+
+
 
     <p class="back-link">
         <button class="btn btn-secondary" onclick="window.location.href='listeTickets.php'">Retour à la liste</button>
@@ -205,7 +218,7 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <section class="status-section">
             <h2>Modifier le statut</h2>
             <form method="post" action="" class="status-form">
-                abel for="status">Statut</label>
+                <label for="status">Statut</label>
                 <select name="status" id="status">
                     <option value="Ouvert"   <?= $ticket['status'] === 'Ouvert'   ? 'selected' : '' ?>>Ouvert</option>
                     <option value="En cours" <?= $ticket['status'] === 'En cours' ? 'selected' : '' ?>>En cours</option>
@@ -239,7 +252,7 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h2>Ajouter un commentaire</h2>
         <form method="post" action="" class="comment-form">
             <div class="form-group">
-                abel for="message">Message</label>
+                <label for="message">Message</label>
                 <textarea id="message" name="message" rows="4" required></textarea>
             </div>
             <div class="form-actions">
@@ -248,5 +261,24 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </form>
     </section>
 </div>
+
+<script>
+    const profileToggle = document.getElementById('profileToggle');
+    const profileMenu   = document.getElementById('profileMenu');
+
+    if (profileToggle && profileMenu) {
+        profileToggle.addEventListener('click', () => {
+            profileMenu.classList.toggle('profile-menu-open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileMenu.contains(e.target) && !profileToggle.contains(e.target)) {
+                profileMenu.classList.remove('profile-menu-open');
+            }
+        });
+    }
+</script>
+
+
 </body>
 </html>
