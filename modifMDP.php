@@ -8,14 +8,26 @@ if (empty($_SESSION['username'])) {
     exit;
 }
 
-$currentUser   = $_SESSION['username'];
-// Harmonisation avec listeTickets.php / afficheTicket.php / ticket.php : `userid`
-$currentUserId = $_SESSION['userid'] ?? null;
+$stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE username = :username");
+$stmt->execute([':username' => $_SESSION['username']]);
+$currentUserData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$currentUserData) {
+    session_destroy();
+    header('Location: login.php');
+    exit;
+}
+
+$_SESSION['userid']    = $currentUserData['id'];
+$_SESSION['role']      = $currentUserData['role'] ?? 'etudiant';
+$_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
+
+$currentUser   = $currentUserData['username'];
+$currentUserId = $_SESSION['userid'];
 
 $errors  = [];
 $success = null;
 
-// CSRF
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
 }
@@ -37,35 +49,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        if ($currentUserId === null) {
-            $errors[] = 'Utilisateur introuvable en session.';
+        $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = :id');
+        $stmt->execute([':id' => $currentUserId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $errors[] = 'Utilisateur introuvable.';
+        } elseif (!password_verify($oldPassword, $user['password_hash'])) {
+            $errors[] = 'Ancien mot de passe incorrect.';
         } else {
-            // Récupérer le hash actuel depuis la BDD
-            $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = :id');
-            $stmt->execute([':id' => $currentUserId]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt    = $pdo->prepare('UPDATE users SET password_hash = :hash WHERE id = :id');
+            $ok      = $stmt->execute([
+                    ':hash' => $newHash,
+                    ':id'   => $currentUserId,
+            ]);
 
-            if (!$user) {
-                $errors[] = 'Utilisateur introuvable.';
-            } elseif (!password_verify($oldPassword, $user['password_hash'])) {
-                $errors[] = 'Ancien mot de passe incorrect.';
+            if (!$ok) {
+                $errors[] = 'Impossible de mettre à jour le mot de passe.';
             } else {
-                // Mettre à jour avec le nouveau hash
-                $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-                $stmt    = $pdo->prepare('UPDATE users SET password_hash = :hash WHERE id = :id');
-                $ok      = $stmt->execute([
-                        ':hash' => $newHash,
-                        ':id'   => $currentUserId,
-                ]);
-
-                if (!$ok) {
-                    $errors[] = 'Impossible de mettre à jour le mot de passe.';
-                } else {
-                    $success = 'Mot de passe modifié avec succès.';
-                    // éviter resoumission
-                    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-                    $csrf_token             = $_SESSION['csrf_token'];
-                }
+                $success = 'Mot de passe modifié avec succès.';
+                // Regénérer le token après action sensible.
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+                $csrf_token             = $_SESSION['csrf_token'];
             }
         }
     }
@@ -82,13 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="page-wrapper">
 
     <?php
-    // Header factorisé avec menu profil
     $pageTitle = 'Modifier mon mot de passe';
     include __DIR__ . '/header.php';
     ?>
 
     <p class="back-link">
         <button class="btn btn-secondary"
+                type="button"
                 onclick="window.location.href='listeTickets.php';">
             Retour à mon espace
         </button>
