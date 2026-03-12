@@ -69,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Impossible de mettre à jour le mot de passe.';
             } else {
                 $success = 'Mot de passe modifié avec succès.';
-                // Regénérer le token après action sensible.
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
                 $csrf_token             = $_SESSION['csrf_token'];
             }

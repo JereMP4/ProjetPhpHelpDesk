@@ -1,4 +1,3 @@
-/* Reset léger */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,7 +5,6 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Page globale */
 body {
     min-height: 100vh;
     background: radial-gradient(circle at top, #020617 0, #020617 40%, #000000 100%);
@@ -16,13 +14,11 @@ body {
     padding: 24px 16px 32px;
 }
 
-/* Conteneur */
 .page-wrapper {
     width: 100%;
     max-width: 900px;
 }
 
-/* Top bar */
 .top-bar {
     display: flex;
     justify-content: space-between;
@@ -38,7 +34,6 @@ body {
     color: #e2e8f0;
 }
 
-/* Boutons */
 .btn {
     border-radius: 999px;
     padding: 8px 16px;
@@ -94,7 +89,6 @@ body {
             0 0 0 1px rgba(15, 23, 42, 1);
 }
 
-/* Texte haut de page */
 .user-info {
     font-size: 0.95rem;
     color: #cbd5e1;
@@ -108,7 +102,6 @@ body {
     margin: 8px 0 12px;
 }
 
-/* Carte ticket */
 .ticket-card {
     padding: 16px 18px 14px;
     border-radius: 16px;
@@ -137,7 +130,6 @@ body {
     color: #e5e7eb;
 }
 
-/* Meta */
 .ticket-meta {
     display: flex;
     flex-wrap: wrap;
@@ -152,7 +144,6 @@ body {
     color: #cbd5e1;
 }
 
-/* Statut tuteur */
 .status-section {
     margin: 18px 0 12px;
 }
@@ -177,7 +168,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Commentaires */
 .comments-section {
     margin-top: 20px;
 }
@@ -228,7 +218,6 @@ body {
     color: #9ca3af;
 }
 
-/* Ajout de commentaire */
 .add-comment-section {
     margin-top: 18px;
 }
@@ -288,7 +277,6 @@ body {
     justify-content: flex-end;
 }
 
-/* Responsive */
 @media (max-width: 720px) {
     body {
         padding: 18px 10px 28px;
@@ -306,7 +294,6 @@ body {
     }
 }
 
-/* Menu profil (même style que listeTickets) */
 .profile-wrapper {
     position: relative;
 }
@@ -354,7 +341,6 @@ body {
     font-weight: 500;
 }
 
-/* Menu déroulant */
 .profile-menu {
     position: absolute;
     right: 0;

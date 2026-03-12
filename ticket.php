@@ -6,26 +6,22 @@
 session_start();
 require_once __DIR__ . '/db.php';
 
-// --- Vérification connexion ---
 if (empty($_SESSION['username'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     header('Location: login.php');
     exit;
 }
 
-// --- Vérification du rôle directement en BDD (modèle PDO de login.php) ---
 $stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE username = :username");
 $stmt->execute([':username' => $_SESSION['username']]);
 $currentUserData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Si l'utilisateur n'existe plus en BDD → on détruit la session
 if (!$currentUserData) {
     session_destroy();
     header('Location: login.php');
     exit;
 }
 
-// Mise à jour de la session avec les données fraîches de la BDD
 $_SESSION['userid']    = $currentUserData['id'];
 $_SESSION['role']      = $currentUserData['role'] ?? 'etudiant';
 $_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
@@ -33,7 +29,6 @@ $_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
 $username = $currentUserData['username'];
 $isTuteur = $_SESSION['is_tuteur'];
 
-// --- Blocage tuteur ---
 if ($isTuteur) {
     http_response_code(403);
     ?>
@@ -55,24 +50,20 @@ if ($isTuteur) {
     exit;
 }
 
-// --- CSRF simple ---
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
 }
 $csrfToken = $_SESSION['csrf_token'];
 
-// --- Valeurs autorisées ---
 $categories = ['Cours', 'TD', 'TP'];
 $priorities = ['Basse', 'Moyenne', 'Haute'];
 $statuses   = ['Ouvert', 'En cours', 'Résolu'];
 
-// --- Traitement du formulaire ---
 $errors  = [];
 $success = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Vérification CSRF
     if (empty($_POST['csrf_token']) || !hash_equals($csrfToken, $_POST['csrf_token'])) {
         $errors[] = 'Jeton CSRF invalide.';
     }
@@ -81,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description'] ?? '');
     $category    = $_POST['category']         ?? '';
     $priority    = $_POST['priority']         ?? '';
-    $status      = $_POST['status']           ?? 'Ouvert';
+    $status = 'Ouvert';
 
     if (empty($title))                           $errors[] = 'Le titre est requis.';
     if (empty($description))                     $errors[] = 'La description est requise.';
@@ -90,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array($status,    $statuses,   true)) $errors[] = 'Statut invalide.';
 
     if (empty($errors)) {
-        // Insertion en BDD via PDO
         $stmt = $pdo->prepare("
             INSERT INTO tickets (author_id, title, description, category, priority, status, created_at)
             VALUES (:author_id, :title, :description, :category, :priority, :status, NOW())
@@ -111,7 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newId   = $pdo->lastInsertId();
             $success = "Ticket créé avec succès (ID : $newId).";
 
-            // Réinitialiser le token pour éviter la re-soumission
             $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
             $csrfToken = $_SESSION['csrf_token'];
 
@@ -133,7 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="page-wrapper">
 
     <?php
-    // Header factorisé avec menu profil
     $pageTitle = 'Créer un ticket';
     include __DIR__ . '/header.php';
     ?>
@@ -193,18 +181,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="<?= htmlspecialchars($p, ENT_QUOTES | ENT_SUBSTITUTE) ?>"
                                 <?= (($_POST['priority'] ?? '') === $p) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($p, ENT_QUOTES | ENT_SUBSTITUTE) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="status">Statut</label>
-                <select id="status" name="status">
-                    <?php foreach ($statuses as $s): ?>
-                        <option value="<?= htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE) ?>"
-                                <?= (($_POST['status'] ?? 'Ouvert') === $s) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

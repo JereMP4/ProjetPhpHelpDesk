@@ -2,9 +2,7 @@
 session_start();
 require_once __DIR__ . '/db.php';
 
-// --- Vérification du rôle directement en BDD (modèle PDO de login.php) ---
 if (empty($_SESSION['username'])) {
-    // On ne fait plus l'affichage HTML ici : le header.php gérera la redirection vers login.php
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     header('Location: login.php');
     exit;
@@ -14,14 +12,12 @@ $stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE username = :us
 $stmt->execute([':username' => $_SESSION['username']]);
 $currentUserData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Si l'utilisateur n'existe plus en BDD → on détruit la session
 if (!$currentUserData) {
     session_destroy();
     header('Location: login.php');
     exit;
 }
 
-// Mise à jour de la session avec les données fraîches de la BDD
 $_SESSION['userid']    = $currentUserData['id'];
 $_SESSION['role']      = $currentUserData['role'] ?? 'etudiant';
 $_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
@@ -29,16 +25,13 @@ $_SESSION['is_tuteur'] = ($_SESSION['role'] === 'tuteur');
 $currentUser = $currentUserData['username'];
 $isTuteur    = $_SESSION['is_tuteur'];
 
-// --- Filtres ---
 $filtreCategorie = $_GET['categorie'] ?? '';
 $filtrePriorite  = $_GET['priorite']  ?? '';
 $filtreStatut    = $_GET['statut']    ?? '';
 
-// --- Construction de la requête avec filtres ---
 $sql    = "SELECT t.*, u.username AS author FROM tickets t JOIN users u ON u.id = t.author_id WHERE 1=1";
 $params = [];
 
-// Si étudiant : seulement ses tickets
 if (!$isTuteur) {
     $sql .= " AND t.author_id = :author_id";
     $params[':author_id'] = $_SESSION['userid'];
@@ -76,7 +69,6 @@ $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <div class="page-wrapper">
 
     <?php
-    // Header factorisé avec redirection si pas connecté
     $pageTitle = 'Espace Personnel';
     include __DIR__ . '/header.php';
     ?>

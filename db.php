@@ -10,7 +10,6 @@ try {
 
     $pdo = new PDO($dsn, DB_USER, DB_PASS);
 
-    // Options de sécurité et d'erreurs
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 } catch (PDOException $e) {

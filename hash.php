@@ -1,8 +1,7 @@
 <?php
-// hash.php
 session_start();
 
-$access_password = 'secretpage'; // à changer si tu gardes cette protection
+$access_password = 'admin';
 if (!isset($_SESSION['access_ok'])) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['access'])) {
         if ($_POST['access'] === $access_password) {
@@ -28,7 +27,7 @@ if (!isset($_SESSION['access_ok'])) {
 
                 <?php if (!empty($access_error)): ?>
                     <div class="error-message">
-                        <?php echo htmlspecialchars($access_error, ENT_QUOTES | ENT_SUBSTITUTE); // [web:19] ?>
+                        <?php echo htmlspecialchars($access_error, ENT_QUOTES | ENT_SUBSTITUTE);?>
                     </div>
                 <?php endif; ?>
 
@@ -57,7 +56,7 @@ $password_input = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password_to_hash'])) {
     $password_input = $_POST['password_to_hash'];
     if ($password_input !== '') {
-        $hash = password_hash($password_input, PASSWORD_DEFAULT); // [web:7][web:10]
+        $hash = password_hash($password_input, PASSWORD_DEFAULT);
     }
 }
 ?>
@@ -80,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password_to_hash'])) 
                     type="text"
                     id="password_to_hash"
                     name="password_to_hash"
-                    value="<?php echo htmlspecialchars($password_input, ENT_QUOTES | ENT_SUBSTITUTE); // [web:19] ?>"
+                    value="<?php echo htmlspecialchars($password_input, ENT_QUOTES | ENT_SUBSTITUTE); ?>"
                     placeholder="Mot de passe en clair"
                     required
                 >
@@ -100,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password_to_hash'])) 
             <div class="form-group" style="margin-top: 16px;">
                 <label>Hash généré</label>
                 <div class="result">
-                    <?php echo htmlspecialchars($hash, ENT_QUOTES | ENT_SUBSTITUTE); // [web:19] ?>
+                    <?php echo htmlspecialchars($hash, ENT_QUOTES | ENT_SUBSTITUTE);?>
                 </div>
             </div>
         <?php endif; ?>

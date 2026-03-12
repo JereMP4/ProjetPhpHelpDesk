@@ -5,7 +5,6 @@ require_once __DIR__ . '/db.php';
 
 $error = "";
 
-// Page de retour prioritaire : ?from=... puis éventuelle redirect_after_login
 $from = $_GET['from'] ?? ($_SESSION['redirect_after_login'] ?? null);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -15,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($nom === '' || $password === '') {
         $error = "Tous les champs sont obligatoires.";
     } else {
-        // Requête préparée pour récupérer l'utilisateur
         $stmt = $pdo->prepare('SELECT id, username, password_hash, role 
                                FROM users 
                                WHERE username = :username');
@@ -23,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password_hash'])) {
-            // Login OK
             session_regenerate_id(true);
 
             $_SESSION['userid']   = $user['id'];
@@ -34,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!empty($from)) {
                 unset($_SESSION['redirect_after_login']);
-                // Sécurité : on rejette toute URL externe (avec un host)
                 $parsed = parse_url($from);
                 if ($parsed === false || isset($parsed['host'])) {
                     header('Location: listeTickets.php');

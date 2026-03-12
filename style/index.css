@@ -1,4 +1,3 @@
-/* Reset léger */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,14 +5,12 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Fond plein écran */
 body {
     min-height: 100vh;
     background: radial-gradient(circle at top, #020617 0, #020617 40%, #000000 100%);
     color: #e5e7eb;
 }
 
-/* Centrage */
 .home-page {
     min-height: 100vh;
     display: flex;
@@ -22,7 +19,6 @@ body {
     padding: 24px 16px;
 }
 
-/* Carte "glassmorphism" */
 .home-hero {
     max-width: 720px;
     width: 100%;
@@ -36,7 +32,6 @@ body {
             0 0 0 1px rgba(148, 163, 184, 0.25);
 }
 
-/* Badge au-dessus du titre */
 .badge {
     display: inline-block;
     padding: 4px 12px;
@@ -49,7 +44,6 @@ body {
     margin-bottom: 10px;
 }
 
-/* Titre principal */
 .home-title {
     font-size: clamp(1.8rem, 3vw, 2.2rem);
     font-weight: 600;
@@ -59,7 +53,6 @@ body {
     margin-bottom: 10px;
 }
 
-/* Sous-texte */
 .home-subtitle {
     font-size: 0.98rem;
     color: #cbd5e1;
@@ -68,12 +61,10 @@ body {
     margin-bottom: 18px;
 }
 
-/* Actions */
 .home-actions {
     margin-bottom: 16px;
 }
 
-/* Boutons réutilisables */
 .btn {
     border-radius: 999px;
     padding: 10px 22px;
@@ -114,7 +105,6 @@ body {
             0 0 0 1px rgba(8, 47, 73, 1);
 }
 
-/* Petits chips descriptifs */
 .home-meta {
     display: flex;
     flex-wrap: wrap;
@@ -131,7 +121,6 @@ body {
     box-shadow: 0 0 0 1px rgba(51, 65, 85, 0.9);
 }
 
-/* Responsive */
 @media (max-width: 600px) {
     .home-hero {
         padding: 24px 18px 20px;

@@ -1,19 +1,16 @@
-/* Reset simple */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; /* [web:37][web:43] */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Page entière */
 body {
     min-height: 100vh;
-    background: radial-gradient(circle at top, #1f2933 0, #0b1120 40%, #020617 100%); /* [web:42][web:45] */
+    background: radial-gradient(circle at top, #1f2933 0, #0b1120 40%, #020617 100%);
     color: #e5e7eb;
 }
 
-/* Wrapper centré */
 .login-page {
     min-height: 100vh;
     display: flex;
@@ -22,7 +19,6 @@ body {
     padding: 16px;
 }
 
-/* Carte */
 .login-card {
     width: 100%;
     max-width: 420px;
@@ -35,7 +31,6 @@ body {
     backdrop-filter: blur(14px);
 }
 
-/* Titre */
 .login-title {
     text-align: center;
     font-size: 1.4rem;
@@ -45,7 +40,6 @@ body {
     margin-bottom: 18px;
 }
 
-/* Message d'erreur */
 .error-message {
     margin-bottom: 12px;
     padding: 8px 10px;
@@ -56,21 +50,18 @@ body {
     font-size: 0.86rem;
 }
 
-/* Formulaire */
 .login-form {
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
 
-/* Groupes de champs */
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-/* Labels */
 .form-group label {
     font-size: 0.86rem;
     font-weight: 500;
@@ -78,7 +69,6 @@ body {
     color: #cbd5f5;
 }
 
-/* Inputs */
 .form-group input[type="text"],
 .form-group input[type="password"] {
     padding: 10px 12px;
@@ -108,7 +98,6 @@ body {
     transform: translateY(-0.5px);
 }
 
-/* Zone résultat du hash */
 .result {
     margin-top: 8px;
     padding: 10px 12px;
@@ -122,12 +111,10 @@ body {
     word-break: break-all;
 }
 
-/* Actions */
 .form-actions {
     margin-top: 6px;
 }
 
-/* Bouton */
 .form-actions input[type="submit"] {
     width: 100%;
     border: none;
@@ -164,7 +151,6 @@ body {
             0 0 0 1px rgba(8, 47, 73, 1);
 }
 
-/* Responsive léger */
 @media (max-width: 480px) {
     .login-card {
         padding: 22px 18px 20px;
@@ -176,7 +162,7 @@ body {
         letter-spacing: 0.14em;
     }
 }
-/* Bouton retour */
+
 .back-button {
     width: 100%;
     border: none;
